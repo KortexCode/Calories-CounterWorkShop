@@ -1,3 +1,5 @@
+const nodeId = (node) => document.getElementById(node);
+
 const compose = (...functions) => data =>
   functions.reduceRight((value, func) => func(value), data);
 
@@ -28,19 +30,35 @@ const attrToString = (obj ={}) => {
 
   const attr = keys.map((keyName)=>{
     return `${keyName}="${obj[keyName]}"`
-  }).join("");
+  }).join(" ");
 
   return attr; /* class="title" */
 }
 //Función para crear una etiqueta con atributos en caso que los tenga
-const tagAttr = obj => (content = '') =>
-  `<${obj.tag}${obj.attrs? " " : ""}${attrToString(obj.attrs)}>${content}</${obj.tag}>`;
+const tagAttr = obj => (content = '') =>{
+  console.log("first", obj.tag, obj.attrs, "contenido", content);
+  return `<${obj.tag}${obj.attrs ? " " : ""}${attrToString(obj.attrs)}>${content}</${obj.tag}>`;
+}
+
 
 //Función para crear etiquetas
 const tag = t => {
-  typeof t === "string" ? tagAttr({tag: t}) : tagAttr(t);
+ 
+  if(typeof t === "string"){
+    return tagAttr({tag: t});
+  }else{
+    return tagAttr(t);
+  }
 }
+//Funciones para crear filas
+const tableRowTag = tag("tr");
+/* const tableRow = items => tableRowTag(tableCells(items)); */
+const tableRow = items => compose(tableRowTag, tableCells)(items);
+
+//Funciones para crear celdas
+const tableCell = tag("td");
 /* tagAttr({tag: "h1", attrs:{class: "title"}})("Chikorita") */
+const tableCells = items => items.map(tableCell).join("");
 
 //Función que valida si se ingresaron datos a los inputs
 const validateInputs= () => {
@@ -65,6 +83,8 @@ function add() {
   }
   list.push(data);
   cleanInputs();
+  updateTotals();
+  renderItems();
   console.log(list)
 }
 //Esta función elmina los valores ingresados en cada input
@@ -75,5 +95,33 @@ function cleanInputs() {
   protein.value = "";
 }
 
-const buildSum = a => b => a + b; 
-console.log(buildSum(5)(5));
+//Función que actualiza los valores totales
+const updateTotals = () => {
+  let calories = 0, carbs =0, protein = 0;
+
+  list.forEach(item => {
+    calories += item.calories;
+    carbs += item.carbs;
+    protein += item.protein;
+  });
+
+  nodeId("totalCalories").textContent = calories;
+  nodeId("totalCarbs").textContent = carbs;
+  nodeId("totalProtein").textContent = protein;
+  console.log(calories, carbs, protein)
+}
+
+//Esta función renderiza los elementos dentro de cuerpo de la tabla
+const renderItems = () => {
+
+  const tableBody = document.querySelector('tbody');
+  tableBody.innerHTML = '';
+
+  list.map(item => {
+    tableBody.append(tableRow(
+      [item.description, item.calories, item.carbs, item.protein]
+    ))
+  })
+}
+
+
